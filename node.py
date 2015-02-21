@@ -76,7 +76,7 @@ class Node():
 		- assetId: system id assigned to the asset
 		- dataItemIds: list of system id assigned to the data items
 		
-		Return: string or None
+		Return: string list or None
 		"""
 		asset_id = p.get("assetId")
 		if not asset_id:

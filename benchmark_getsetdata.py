@@ -7,7 +7,7 @@ Here is an example showing how to use data get/set functions:
 
 string node.getData(string name)
 boolean node.setData(string name, string value)
-string node.getHistoricalData(string name, **p)
+string list node.getHistoricalData(string name, **p)
 """
 
 import time
