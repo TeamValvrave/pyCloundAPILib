@@ -1,29 +1,54 @@
 # -*- coding: utf-8 -*-
 
-import mashery_api
+from mashery_api import *
+from axeda_api import *
 
 class Node():
 	"""
 	A node indicates a machine or whatever connected to cloud.
 	Its role may be client, server or whatever.
 	"""
-	def __init__(self, config = None):
+	def __init__(self, name, config):
+		if not name:
+			assert(False)
+
 		if not config:
 			assert(False)
 
-		if config.get("cloud") == "Mashery":
-			self.cloud = mashery_api.Mashery(config)
-		elif config.get("cloud") == "Axeda":
-			self.cloud = axeda_api.Axeda(config)
+		self.config = config
+		if name == "Mashery":
+			self.cloud = Mashery(config)
+		elif name == "Axeda":
+			self.cloud = Axeda(config)
+			pass
 		else:
 			print("cloud is not configured")
 			assert(False)
 
 	def dataId(self, name):
-		return self.cloud.dataId(name)
+		return name
 
-	def setData(self, name, value):
-		return self.cloud.setData(name, value)
+	def setData(self, id, value):
+		scripto = self.cloud.scripto()
+		r = scripto.execute('vlvFastSetPlatformData', data = {
+			"dataItemName": id,
+			"dataItemValue": str(value)
+		})
 
-	def getData(self, name):
-		return self.cloud.getData(name)
+		if r:
+			return json.loads(r).get("msg") == "success"
+		else:
+			return False
+
+	def getData(self, id):
+		scripto = self.cloud.scripto()
+		r = scripto.execute('vlvFastGetPlatformData', data = {
+			"dataItemName": id,
+		})
+
+		if r:
+			r = json.loads(r)
+			if r.get("msg") == "success":
+				return r.get("val")
+
+		return None

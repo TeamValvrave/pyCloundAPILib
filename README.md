@@ -19,12 +19,8 @@ its environment in the same way.
 [Examples]
 - benchmark_getsetdata.py
 This example code demonstrates how to call get/set function to operate a data
-item stored in cloud and benchmark the get/set performance.
-
-- server.py
-An example server.py shows how to setup server variables before launching
-server code. Client end can reuse the same code to establish its environment
-in the similar way.
+item stored in cloud and benchmark the get/set performance. Type
+benchmark_getsetdata.py -h for help.
 
 - config.py
 Pre-defined cloud settings.
@@ -37,6 +33,11 @@ st/security.html
   InsecureRequestWarning)
 
 [Changelogs]
+2015/02/21: ver 0.0.2
+Remove server.py.
+Code cleanup.
+Enhance benchmark_getsetdata.py.
+Add the API support for Axeda Platform.
 2015/02/16: ver 0.0.1
 Initial version, supporting Wind River Mashery API manager for get/set data
 item.

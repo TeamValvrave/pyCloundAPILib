@@ -5,49 +5,122 @@
 """
 Here is an example showing how to use data get/set functions:
 
-boolen node.getData(string name)
-string node.setData(string name, string value)
+string node.getData(string name)
+boolean node.setData(string name, string value)
 """
 
 import time
+from optparse import OptionParser
+import sys
 from node import Node
-from config import mashery_cloud_config
+from config import cloud_configs
 
-data_name = "vlv_benchmark"
-test_count = 50
+VERSION = '0.3'
+
 test_payload_lens = (8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
 
-node = Node(mashery_cloud_config)
-data_id = node.dataId(data_name)
+def do_write_test(cloud_name, config, data_name, data_len, verify_test, test_count):
+	print("Benchmark data set %d-byte with %s ..." % (data_len, cloud_name))
 
-# Benchmark tests
-for i in test_payload_lens:
-	data_val = "valvrave" * (i / 8)
+	node = Node(cloud_name, config)
+	data_id = node.dataId(data_name)
+	data_val = "valvrave" * (data_len / 8)
 
-	print("Data set benchmark ...")
+	test_ok = True
 	start_time = time.time()
 	for i in range(test_count):
 		if not node.setData(data_id, data_val):
 			print("Fail to set data %s = %s" % (data_name, data_val))
+			test_ok = False
 			break
 		else:
 			print("Data set %d/%d\r" % (i + 1, test_count)),
+			sys.stdout.flush()
+			if verify_test and do_read_test(cloud, data_name, data_len, 1, data_val) == False:
+				test_ok = False
+				break
 	end_time = time.time()
-	if i + 1 == test_count:
-		print("\nAverage data set time %fs consumed for %d bytes)" % ((end_time - start_time) / test_count, len(data_val)))
-	else:
-		break
 
-	print("Data get benchmark ...")
+	if test_ok:
+		print("\nAverage data set time %fs consumed for %d bytes)" % ((end_time - start_time) / test_count, data_len))
+		return True
+	else:
+		print("\nData set time failed for %d bytes at %d/%d)" % (data_len, i + 1, test_count))
+		return False
+
+def do_read_test(cloud_name, config, data_name, data_len, test_count, data_value = None):
+	print("Benchmark data get %d-byte with %s ..." % (data_len, cloud_name))
+
+	node = Node(cloud_name, config)
+	data_id = node.dataId(data_name)
+
+	test_ok = True
 	start_time = time.time()
 	for i in range(test_count):
-		if not node.getData(data_id):
+		val = node.getData(data_id)
+		if not val:
 			print("Fail to get data %s" % data_name)
+			test_ok = False
 			break
 		else:
+			if data_value and data_value != val:
+				print("Data returned doesn't match up")
+				test_ok = False
+				break
 			print("Data get %d/%d\r" % (i + 1, test_count)),
 	end_time = time.time()
-	if i + 1 == test_count:
-		print("\nAverage data get time %fs consumed for %d bytes)\n" % ((end_time - start_time) / test_count, len(data_val)))
+
+	if test_ok:
+		print("\nAverage data get time %fs consumed for %d bytes)" % ((end_time - start_time) / test_count, data_len))
+		return True
 	else:
-		break
+		print("\nData get time failed for %d bytes at %d/%d)" % (data_len, i + 1, test_count))
+		return False
+
+def benchmark(cloud_name, config, read_test, write_test, test_count, verify_test):
+	data_name = "vlv_benchmark"
+	for data_len in test_payload_lens:
+		if write_test:
+			do_write_test(cloud_name, config, data_name, data_len, verify_test, test_count)
+
+		if read_test:
+			do_read_test(cloud_name, config, data_name, data_len, test_count)
+
+def parse_args():
+	parser = OptionParser(usage='%prog -s cloud_name [-h] [--version] [-r] [-w] [-n]',
+						  version='%prog ' + VERSION)
+	parser.add_option('-s', '--cloud', dest='cloud_name', action='store',
+					  help='Specify the cloud server used in benchmark')
+	parser.add_option('-r', '--read-test', dest='read_test', action='store_true',
+					  default=False, help='Run data item read test [%default]')
+	parser.add_option('-w', '--write-test', dest='write_test', action='store_true',
+					  default=False, help='Run data item write test [%default]')
+	parser.add_option('-p', '--verify', dest='verify_test', action='store_true',
+					  default=False, help='Read back the data after a write [%default]')
+	parser.add_option('-n', '--test-count', dest='test_count', action='store',
+					  default=1, help='The number of test loop [%default]')
+
+	opts, args = parser.parse_args()
+
+	if len(args):
+		parser.print_help()
+		sys.exit(-1)
+
+	if not opts.cloud_name in cloud_configs.keys():
+		print("ERROR: Please specify a cloud name %s used to access cloud services" % repr(tuple(cloud_configs.keys())))
+		sys.exit(-1)
+
+	if not opts.read_test and not opts.write_test:
+		print("ERROR: Please specify a test item")
+		sys.exit(-1)
+
+	if int(opts.test_count) <= 0:
+		print("ERROR: Please specify a valid test count")
+		sys.exit(-1)
+
+	return opts
+
+if __name__ == '__main__':
+	opts = parse_args()
+	benchmark(opts.cloud_name, cloud_configs[opts.cloud_name], opts.read_test, \
+		opts.write_test, int(opts.test_count), opts.verify_test)
