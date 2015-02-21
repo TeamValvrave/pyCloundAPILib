@@ -7,6 +7,7 @@ Here is an example showing how to use data get/set functions:
 
 string node.getData(string name)
 boolean node.setData(string name, string value)
+string node.getHistoricalData(string name, **p)
 """
 
 import time
@@ -42,20 +43,24 @@ def do_write_test(cloud_name, config, data_name, data_len, verify_test, test_cou
 	end_time = time.time()
 
 	if test_ok:
-		print("\nAverage data set time %fs consumed for %d bytes)" % ((end_time - start_time) / test_count, data_len))
-		return True
+		print("\nAverage data set time %fs consumed for %d bytes" % ((end_time - start_time) / test_count, data_len))
+		return data_val
 	else:
-		print("\nData set time failed for %d bytes at %d/%d)" % (data_len, i + 1, test_count))
-		return False
+		print("\nData set time failed for %d bytes at %d/%d" % (data_len, i + 1, test_count))
+		return None
 
-def do_read_test(cloud_name, config, data_name, data_len, test_count, data_value = None):
-	print("Benchmark data get %d-byte with %s ..." % (data_len, cloud_name))
+def do_read_test(cloud_name, config, data_name, data_len, test_count, data_val = None):
+	if data_val:
+		print("Benchmark data get %d-byte with %s ..." % (data_len, cloud_name))
+	else:
+		print("Benchmark data get with %s ..." % cloud_name)
 
 	node = Node(cloud_name, config)
 	data_id = node.dataId(data_name)
 
 	test_ok = True
 	start_time = time.time()
+	val = None
 	for i in range(test_count):
 		val = node.getData(data_id)
 		if not val:
@@ -63,7 +68,7 @@ def do_read_test(cloud_name, config, data_name, data_len, test_count, data_value
 			test_ok = False
 			break
 		else:
-			if data_value and data_value != val:
+			if data_val and data_val != val:
 				print("Data returned doesn't match up")
 				test_ok = False
 				break
@@ -71,26 +76,54 @@ def do_read_test(cloud_name, config, data_name, data_len, test_count, data_value
 	end_time = time.time()
 
 	if test_ok:
-		print("\nAverage data get time %fs consumed for %d bytes)" % ((end_time - start_time) / test_count, data_len))
+		print("\nAverage data get time %fs consumed for %d bytes" % ((end_time - start_time) / test_count, len(val)))
 		return True
 	else:
-		print("\nData get time failed for %d bytes at %d/%d)" % (data_len, i + 1, test_count))
+		print("\nData get time failed for %d bytes at %d/%d" % (len(data_val), i + 1, test_count))
 		return False
 
-def benchmark(cloud_name, config, read_test, write_test, test_count, verify_test):
-	data_name = "vlv_benchmark"
-	for data_len in test_payload_lens:
-		if write_test:
-			do_write_test(cloud_name, config, data_name, data_len, verify_test, test_count)
+def do_history_test(cloud_name, config, data_name, test_count):
+	print("Benchmark historical data get with %s ..." % cloud_name)
 
-		if read_test:
-			do_read_test(cloud_name, config, data_name, data_len, test_count)
+	node = Node(cloud_name, config)
+	test_ok = True
+
+	start_time = time.time()
+	for i in range(test_count):
+		r = node.getHistoricalData(data_name, assetId = 476, dataItemIds = [ 437 ])
+		if not r:
+			test_ok = False
+			break
+	end_time = time.time()
+
+	if test_ok:
+		print("\nAverage data get time %fs consumed" % ((end_time - start_time) / test_count))
+		return True
+	else:
+		print("\nData get time failed at %d/%d" % (i + 1, test_count))
+		return False
+
+def benchmark(cloud_name, config, read_test, write_test, test_count, verify_test, history_test):
+	data_name = "vlv_benchmark"
+
+	# Back to back test
+	if write_test:
+		for data_len in test_payload_lens:
+			data_val = do_write_test(cloud_name, config, data_name, data_len, verify_test, test_count)
+
+			if read_test:
+				do_read_test(cloud_name, config, data_name, data_len, test_count, data_val)
+	elif read_test:
+		do_read_test(cloud_name, config, data_name, 0, test_count, None)
+
+	if history_test:
+		do_history_test(cloud_name, config, data_name, test_count)
 
 def parse_args():
 	parser = OptionParser(usage='%prog -s cloud_name [-h] [--version] [-r] [-w] [-n]',
 						  version='%prog ' + VERSION)
 	parser.add_option('-s', '--cloud', dest='cloud_name', action='store',
-					  help='Specify the cloud server used in benchmark')
+					  default="Mashery", help='Specify the cloud service used in benchmark [%default]')
 	parser.add_option('-r', '--read-test', dest='read_test', action='store_true',
 					  default=False, help='Run data item read test [%default]')
 	parser.add_option('-w', '--write-test', dest='write_test', action='store_true',
@@ -99,6 +132,8 @@ def parse_args():
 					  default=False, help='Read back the data after a write [%default]')
 	parser.add_option('-n', '--test-count', dest='test_count', action='store',
 					  default=1, help='The number of test loop [%default]')
+	parser.add_option('-g', '--read-history', dest='history_test', action='store_true',
+					  default=False, help='Read back the historical data [%default]')
 
 	opts, args = parser.parse_args()
 
@@ -110,7 +145,7 @@ def parse_args():
 		print("ERROR: Please specify a cloud name %s used to access cloud services" % repr(tuple(cloud_configs.keys())))
 		sys.exit(-1)
 
-	if not opts.read_test and not opts.write_test:
+	if not opts.read_test and not opts.write_test and not opts.history_test:
 		print("ERROR: Please specify a test item")
 		sys.exit(-1)
 
@@ -123,4 +158,4 @@ def parse_args():
 if __name__ == '__main__':
 	opts = parse_args()
 	benchmark(opts.cloud_name, cloud_configs[opts.cloud_name], opts.read_test, \
-		opts.write_test, int(opts.test_count), opts.verify_test)
+		opts.write_test, int(opts.test_count), opts.verify_test, opts.history_test)

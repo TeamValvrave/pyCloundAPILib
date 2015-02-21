@@ -26,9 +26,20 @@ class Node():
 			assert(False)
 
 	def dataId(self, name):
+		"""
+		@id: data item name
+
+		Return: string or None
+		"""
 		return name
 
 	def setData(self, id, value):
+		"""
+		@id: data item name
+		@value: string data to be stored
+
+		Return: boolean
+		"""
 		scripto = self.cloud.scripto()
 		r = scripto.execute('vlvFastSetPlatformData', data = {
 			"dataItemName": id,
@@ -41,6 +52,11 @@ class Node():
 			return False
 
 	def getData(self, id):
+		"""
+		@id: data item name
+
+		Return: string or None
+		"""
 		scripto = self.cloud.scripto()
 		r = scripto.execute('vlvFastGetPlatformData', data = {
 			"dataItemName": id,
@@ -52,3 +68,60 @@ class Node():
 				return r.get("val")
 
 		return None
+
+	def getHistoricalData(self, name, **p):
+		"""
+		@name: data item name
+		@p:
+		- assetId: system id assigned to the asset
+		- dataItemIds: list of system id assigned to the data items
+		
+		Return: string or None
+		"""
+		asset_id = p.get("assetId")
+		if not asset_id:
+			if not p.get("modelNumber"):
+				model = self.cloud["model"]
+			else:
+				model = p["modelNumber"]
+
+			if not p.get("serialNumber"):
+				serial = self.cloud["asset"]
+			else:
+				serial = p["serialNumber"]
+
+			s = TypeAssetCriteria(**{
+				"modelNumber": model,
+				"serialNumber": serial
+			})
+			asset = self.cloud.asset()
+			r = asset.findOne(s)
+			if not r:
+				print("Not found the asset %s (model: %s)" % (self.cloud["asset"], self.cloud["model"]))
+				return None
+
+			asset_id = r['systemId']
+
+		s = TypeAbstractSearchCriteria(p.get("pageSize"), p.get("pageNumber"), p.get("sortAscending"), p.get("sortPropertyName")).getValue()
+		c = TypeHistoricalDataItemValueCriteria(asset_id, p.get("dataItemIds"), p.get("startDate"), p.get("endDate")).getValue()
+		s.update(c)
+
+		dataitem = self.cloud.dataItem()
+		r = dataitem.findHistoricalValues(**s)
+		if not r:
+			return None
+
+		values = []
+		# Find if the server variables were created.
+		for dataItemValue in r["dataItemValues"]:
+			dataItem = dataItemValue["dataItem"]
+			#print("[%s] Data \"%s\" = %s, type %s" % (dataItem["systemId"], dataItem["name"], dataItemValue["value"], dataItem["type"]))
+			if name != dataItem["name"]:
+				continue
+			#print("Data id %d, value %s" % (int(dataItem["systemId"]), dataItemValue["value"]))
+			values.append(dataItemValue["value"])
+
+		if self.cloud.isDebug():
+			print values
+
+		return values

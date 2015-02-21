@@ -6,7 +6,7 @@ import utils
 import axeda_api
 from cloud import Cloud
 
-class Mashery(Cloud):
+class Mashery(axeda_api.Axeda):
 	"""
 	Wind River Mashery API
 	http://windriver.mashery.com/io-docs
@@ -31,6 +31,7 @@ class Mashery(Cloud):
 		self.api_key = config["api_key"]
 		# Service Requires SSL
 		self.ssl = config.get('ssl')
+		self.debug = config["debug"] if config.get('debug') else False
 		self.name_space = None
 
 		# Always use v1
@@ -53,6 +54,12 @@ class Mashery(Cloud):
 	def scripto(self):
 		return Scripto(self.config)
 
+	def asset(self):
+		return Asset(self.config)
+
+	def dataItem(self):
+		return DataItem(self.config)
+
 class Scripto(Mashery, axeda_api.Scripto):
 	def __init__(self, config):
 		Mashery.__init__(self, config)
@@ -71,3 +78,21 @@ class Scripto(Mashery, axeda_api.Scripto):
 			return r.content
 		else:
 			return None
+
+class Asset(Mashery, axeda_api.Asset):
+	"""
+	Asset Object APIs
+	"""
+	def __init__(self, config):
+		Mashery.__init__(self, config)
+		self.url_prefix = self.url_prefix + 'asset/'
+		self.api_key = self.get('api_key')
+
+class DataItem(Mashery, axeda_api.DataItem):
+	"""
+	DataItemBridge. See Axeda_v2_API_Services_Developers_Reference_Guide_6.8
+	"""
+	def __init__(self, config):
+		Mashery.__init__(self, config)
+		self.url_prefix = self.url_prefix + 'dataItem/'
+		self.api_key = self.get('api_key')
