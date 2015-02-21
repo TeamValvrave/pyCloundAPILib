@@ -33,11 +33,15 @@ st/security.html
   InsecureRequestWarning)
 
 [Changelogs]
+2015/02/21: ver 0.0.3
+* Add node.getHistoricalData() support
+
 2015/02/21: ver 0.0.2
-Remove server.py.
-Code cleanup.
-Enhance benchmark_getsetdata.py.
-Add the API support for Axeda Platform.
+* Remove server.py.
+* Code cleanup.
+* Enhance benchmark_getsetdata.py.
+* Add the API support for Axeda Platform.
+
 2015/02/16: ver 0.0.1
-Initial version, supporting Wind River Mashery API manager for get/set data
+* Initial version, supporting Wind River Mashery API manager for get/set data
 item.
