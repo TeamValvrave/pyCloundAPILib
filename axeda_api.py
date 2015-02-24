@@ -24,7 +24,8 @@ def toDateTime(c):
 	return None
 
 class TypeabstractPlatformObjectBase(object):
-	def __init__(self, val):
+	def __init__(self, val, **p):
+		val.update(p)
 		self.stored_value = val
 
 	def getValue(self):
@@ -76,11 +77,17 @@ class TypeAbstractSearchCriteria(TypeabstractPlatformObjectBase):
 	Format:
 	attributes
 	@pageSize: int
+	Specify the number of entries per page of the results, if not specified defaults to MAX_PAGE_SIZE
 	@pageNumber: int
+	Specify which page of the results to return, if not specified defaults to DEFAULT_PAGE.
+	Using the pageNumber pagination property affects which found object
+	is returned by the findOne method. For example, pageNumber=1 returns the
+	first matching found object, while pageNumber=3 returns the 3rd matching
+	found object, etc.
 	@sortAscending: boolean
 	@sortPropertyName: string
 	"""
-	def __init__(self, pageSize, pageNumber, sortAscending, sortPropertyName):
+	def __init__(self, pageSize, pageNumber, sortAscending, sortPropertyName, **p):
 		self.pageSize = toInt(pageSize)
 		self.pageNumber = toInt(pageNumber)
 		self.sortAscending = toBool(sortAscending)
@@ -91,7 +98,48 @@ class TypeAbstractSearchCriteria(TypeabstractPlatformObjectBase):
 			"pageNumber": self.pageNumber,
 			"sortAscending": self.sortAscending,
 			"sortPropertyName": self.sortPropertyName
-		})
+		}, **p)
+
+class TypeDataItemCriteria(TypeAbstractSearchCriteria):
+	"""
+	Format:
+	@name: string
+	@alias: string
+	@modelId: string
+	Model system id.
+	@types: list of DataItemType ("ANALOG" / "DIGITAL" / "STRING")
+	@readOnly: boolean
+	@visible: boolean
+	@forwarded: boolean
+	@historicalOnly: boolean
+	e.g, "name"
+	"""
+	def __init__(self, **p):
+		self.name = toString(p.get("name"))
+		self.alias = toString(p.get("alias"))
+		self.modelId = toString(p.get("modelId"))
+		self.types = toList(p.get("types"))
+		self.readOnly = toBool(p.get("readOnly"))
+		self.visible = toBool(p.get("visible"))
+		self.forwarded = toBool(p.get("forwarded"))
+		self.historicalOnly = toBool(p.get("historicalOnly"))
+
+		TypeAbstractSearchCriteria.__init__(self,
+			pageSize = p.get("pageSize"),
+			pageNumber = p.get("pageNumber"),
+			sortAscending = p.get("sortAscending"),
+			sortPropertyName = p.get("sortPropertyName"),
+			**{
+				"name": self.name,
+				"alias": self.alias,
+				"modelId": self.modelId,
+				"types": self.types,
+				"readOnly": self.readOnly,
+				"visible": self.visible,
+				"forwarded": self.forwarded,
+				"historicalOnly": self.historicalOnly
+			}
+		)
 
 class TypeHistoricalDataItemValueCriteria(TypeAbstractSearchCriteria):
 	"""
@@ -245,31 +293,6 @@ class TypeAssetCriteria(TypeAbstractSearchCriteria):
 			"neverRegistered": self.neverRegistered,
 			"inMachineStream": self.inMachineStream
 		})
-
-class Criteria(dict):
-	"""
-	Format:
-	@name: string
-	@alias: string
-	@modelId: int
-	Model system id.
-	@types: list
-	@readOnly: bool
-	@visible: bool
-	@forwarded: bool
-	@historicalOnly: null
-	@pageSize: null
-	@pageNumber: int
-	Using the pageNumber pagination property affects which found object
-	is returned by the findOne method. For example, pageNumber=1 returns the
-	first matching found object, while pageNumber=3 returns the 3rd matching
-	found object, etc.
-	@sortAscending: bool
-	@sortPropertyName: string
-	e.g, "name"
-	"""
-	def __init__(self, criteria):
-		dict.__init__(self, criteria)
 
 class CurrentDataItemValueCriteria(dict):
 	"""
@@ -783,7 +806,7 @@ class DataItem(Axeda):
 		else:
 			return None
 
-	def findOne(self, criteria):
+	def findOne(self, **s):
 		"""
 		Returns the first Data Item found that meets specified search criteria.
 
@@ -792,15 +815,12 @@ class DataItem(Axeda):
 		Note:
 		Essentially this API equals to find() with pageNumber=1.
 		"""
-		self.checkParameter((criteria,))
-		c = Criteria(criteria)
-
 		url = self.setURL("findOne")
 
 		headers = self.setHeaders(json = True)
 
 		if True:
-			payload = json.dumps(c)
+			payload = json.dumps(s)
 		else:
 			payload = None
 
