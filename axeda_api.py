@@ -34,7 +34,7 @@ class TypeabstractPlatformObjectBase(object):
 		return self.stored_value
 
 	def toJson(self):
-		return json.dumps(self)
+		return json.dumps(self.stored_value)
 
 	def toXml(self):
 		pass
@@ -49,13 +49,13 @@ class TypeAbstractPlatformObject(TypeabstractPlatformObjectBase):
 	@restUrl: string
 	"""
 	def __init__(self, id, systemId, label, detail, restUrl):
-		TypeabstractPlatformObjectBase.__init__(self, [
-			("id", id),
-			("systemId", systemId),
-			("label", label),
-			("detail", detail),
-			("restUrl", restUrl)
-		])
+		TypeabstractPlatformObjectBase.__init__(self, {
+			"id": id,
+			"systemId": systemId,
+			"label": label,
+			"detail": detail,
+			"restUrl": restUrl
+		})
 
 class TypeDataItemReference(TypeAbstractPlatformObject):
 	def __init__(self, id, systemId, label, detail, restUrl):
@@ -164,12 +164,12 @@ class TypeAbstractExecutionResult(TypeabstractPlatformObjectBase):
 		self.successful = toBool(p.get("successful"))
 		self.totalCount = toInt(p.get("totalCount"))
 
-		TypeabstractPlatformObjectBase.__init__(self, [
-			("succeeded", self.succeeded),
-			("failures", self.failures),
-			("successful", self.successful),
-			("totalCount", self.totalCount)
-		])
+		TypeabstractPlatformObjectBase.__init__(self, {
+			"succeeded": self.succeeded,
+			"failures": self.failures,
+			"successful": self.successful,
+			"totalCount": self.totalCount
+		})
 
 class TypeExecutionResult(TypeAbstractExecutionResult):
 	def __init__(self, p):
@@ -213,38 +213,38 @@ class TypeAssetCriteria(TypeAbstractSearchCriteria):
 			p.get("assetId"), p.get("dataItemIds"), p.get("startDate"), p.get("endDate")
 		)
 
-		TypeabstractPlatformObjectBase.__init__(self, [
-			("gatewayId", self.gatewayId),
-			("name", self.name),
-			("modelNumber", self.modelNumber),
-			("serialNumber", self.serialNumber),
-			("organizationName", self.organizationName),
-			("locationName", self.locationName),
-			("regionName", self.regionName),
-			("assetGroupName", self.assetGroupName),
-			("systemName", self.systemName),
-			("gatewayName", self.gatewayName),
-			("gatewayOnly", self.gatewayOnly),
-			("backupAgentsOnly", self.backupAgentsOnly),
-			("packageName", self.packageName),
-			("packageVersion", self.packageVersion),
-			("withoutPackage", self.withoutPackage),
-			("muted", self.muted),
-			("conditionId", self.conditionId),
-			("toLastContactDate", self.toLastContactDate),
-			("fromLastContactDate", self.fromLastContactDate),
+		TypeabstractPlatformObjectBase.__init__(self, {
+			"gatewayId": self.gatewayId,
+			"name": self.name,
+			"modelNumber": self.modelNumber,
+			"serialNumber": self.serialNumber,
+			"organizationName": self.organizationName,
+			"locationName": self.locationName,
+			"regionName": self.regionName,
+			"assetGroupName": self.assetGroupName,
+			"systemName": self.systemName,
+			"gatewayName": self.gatewayName,
+			"gatewayOnly": self.gatewayOnly,
+			"backupAgentsOnly": self.backupAgentsOnly,
+			"packageName": self.packageName,
+			"packageVersion": self.packageVersion,
+			"withoutPackage": self.withoutPackage,
+			"muted": self.muted,
+			"conditionId": self.conditionId,
+			"toLastContactDate": self.toLastContactDate,
+			"fromLastContactDate": self.fromLastContactDate,
 			#@dataItem: DataItemValueCriteria
-			("hasEventsSince", self.hasEventsSince),
+			"hasEventsSince": self.hasEventsSince,
 			#@geofence: GeofenceCriteria
-			("showAssetsWithAlarms", self.showAssetsWithAlarms),
-			("propertyName", self.propertyName),
+			"showAssetsWithAlarms": self.showAssetsWithAlarms,
+			"propertyName": self.propertyName,
 			#@propertyNamesMatchType：PropertyNamesMatchType
-			("propertyValue", self.propertyValue),
-			("includeDetails", self.includeDetails),
-			("missing", self.missing),
-			("neverRegistered", self.neverRegistered),
-			("inMachineStream", self.inMachineStream)
-		])
+			"propertyValue": self.propertyValue,
+			"includeDetails": self.includeDetails,
+			"missing": self.missing,
+			"neverRegistered": self.neverRegistered,
+			"inMachineStream": self.inMachineStream
+		})
 
 class Criteria(dict):
 	"""
@@ -544,7 +544,7 @@ class Asset(Axeda):
 
 		# FIXME: either mode doesn't working with Axeda but Mashery.
 		if True:
-			payload = json.dumps(s)
+			payload = s.toJson()
 		else:
 			if True:
 				payload = \
