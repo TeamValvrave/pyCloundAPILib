@@ -33,6 +33,9 @@ class Node():
 
 		Return: string or None
 		"""
+		return name
+
+	def dataSystemId(self, name):
 		if name in self.name_mapping:
 			return self.name_mapping[name]
 
