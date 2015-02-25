@@ -90,7 +90,8 @@ def do_history_test(cloud_name, config, data_name, test_count):
 
 	start_time = time.time()
 	for i in range(test_count):
-		r = node.getHistoricalData(data_name, assetId = 476, dataItemIds = [ 437 ])
+		# for vlv_stub
+		r = node.getHistoricalData(data_name, assetId = 476, dataItemIds = [ 446 ])
 		if not r:
 			test_ok = False
 			break
