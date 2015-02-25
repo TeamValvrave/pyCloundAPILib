@@ -112,10 +112,27 @@ class Node():
 
 		r = dataItem.delete(r["systemId"])
 		if not r:
-			print("deleteData: not found the data item %s" % name)
+			print("deleteData: fail to delete data item %s" % name)
 			return None
 
 		return r
+
+	def deleteDatas(self, name_pattern):
+		dataItem = self.cloud.dataItem()
+		s = TypeDataItemCriteria(**{
+			"name": name_pattern,
+			"types": ["STRING"],
+		}).getValue()
+		r = dataItem.find(**s)
+		if not r:
+			print("deleteDatas: not found the data item %s" % name_pattern)
+
+		for d in r["dataItems"]:
+			j = dataItem.delete(d["systemId"])
+			if not j:
+				print("deleteDatas: fail to delete data items %s" % name_pattern)
+				return None
+			print("deleteDatas: %s deleted" % d["name"])
 
 	def getHistoricalData(self, name, **p):
 		"""
