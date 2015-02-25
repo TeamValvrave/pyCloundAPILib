@@ -47,6 +47,8 @@ class Node():
 		})
 
 		if r:
+			if self.cloud.isDebug():
+				print("setData: %s" % r)
 			return json.loads(r).get("msg") == "success"
 		else:
 			return False
@@ -63,11 +65,37 @@ class Node():
 		})
 
 		if r:
+			if self.cloud.isDebug():
+				print("getData: %s" % r)
+
 			r = json.loads(r)
 			if r.get("msg") == "success":
 				return r.get("val")
 
 		return None
+
+	def deleteData(self, name):
+		"""
+		@name: data item name
+
+		Return: string or None
+		"""
+		dataItem = self.cloud.dataItem()
+		s = TypeDataItemCriteria(**{
+			"name": name,
+			"types": ["STRING"],
+		}).getValue()
+		r = dataItem.findOne(**s)
+		if not r:
+			print("deleteData: not found the data item %s" % name)
+			return None
+
+		r = dataItem.delete(r["systemId"])
+		if not r:
+			print("deleteData: not found the data item %s" % name)
+			return None
+
+		return r
 
 	def getHistoricalData(self, name, **p):
 		"""
