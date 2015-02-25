@@ -25,13 +25,30 @@ class Node():
 			print("cloud is not configured")
 			assert(False)
 
+		self.name_mapping = {}
+
 	def dataId(self, name):
 		"""
 		@id: data item name
 
 		Return: string or None
 		"""
-		return name
+		if name in self.name_mapping:
+			return self.name_mapping[name]
+
+		dataItem = self.cloud.dataItem()
+		s = TypeDataItemCriteria(**{
+			"name": name,
+			"types": ["STRING"],
+		}).getValue()
+		r = dataItem.findOne(**s)
+		if not r:
+			print("dataId: not found the data item %s" % name)
+			return None
+
+		id = r["systemId"]
+		self.name_mapping[name] = id
+		return id
 
 	def setData(self, id, value):
 		"""
