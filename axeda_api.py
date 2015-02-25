@@ -767,7 +767,8 @@ class DataItem(Axeda):
 
 		r = self.deleteRequest(url, headers)
 		if r.status_code == 200:
-			return TypeExecutionResult(json.loads(r.content))
+			#return TypeExecutionResult(json.loads(r.content))
+			return json.loads(r.content)
 		else:
 			return None
 
