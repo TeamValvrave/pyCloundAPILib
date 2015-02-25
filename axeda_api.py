@@ -772,7 +772,7 @@ class DataItem(Axeda):
 		else:
 			return None
 
-	def find(self, criteria):
+	def find(self, **s):
 		"""
 		Finds Data Items based on search criteria.
 
@@ -789,15 +789,12 @@ class DataItem(Axeda):
         sortAscending: (null)
         sortPropertyName: (null)
 		"""
-		self.checkParameter((criteria,))
-		c = Criteria(criteria)
-
 		url = self.setURL("find")
 
 		headers = self.setHeaders(json = True)
 
 		if True:
-			payload = json.dumps(c)
+			payload = json.dumps(s)
 		else:
 			payload = None
 
