@@ -9,12 +9,10 @@
 This python library provides the support for a various of cloud API and gives
 an unique interface for application.
 
+Currently, this library support Axeda Platform and Wind River Mashery API manager.
+
 In the context of this library, all machines connected to cloud are deems as
 nodes, either a role of server or client.
-
-For server side, an example server.py shows how to setup server variables
-before launching server code. Client end can reuse the same code to establish
-its environment in the same way.
 
 [Examples]
 - benchmark_getsetdata.py
