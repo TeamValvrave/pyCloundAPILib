@@ -21,16 +21,23 @@ item stored in cloud and benchmark the get/set performance. Type
 benchmark_getsetdata.py -h for help.
 
 - config.py
-Pre-defined cloud settings.
+Pre-defined cloud settings for Wind River Axeda server and Mashery API manager.
 
 [Note]
-Please ignore this warnning during runtime if https is used:
+python-requests and ssl modules have a bug on handling SSL URL of mashery API
+manager. pyCloudAPILib masks the SSL warning but it essentionally causes a
+performance impact. To remove the impact, apply the patch patch/requests-fix-matching-special-URL-for-SSL-certificate.patch
+to python-requests module.
 
-urllib3\connectionpool.py:734: InsecureRequestWarning: Unverified HTTPS request is being made. Adding certificat e verification is strongly advised. See: https://urllib3.readthedocs.org/en/late
-st/security.html
-  InsecureRequestWarning)
+Then modify config.py and change the following line
+"ssl": False,
+to
+"ssl": True,
 
 [Changelogs]
+2015/03/25: ver 0.0.4
+* README cleanup
+
 2015/02/21: ver 0.0.3
 * Add node.getHistoricalData() support
 
