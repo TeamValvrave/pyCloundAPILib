@@ -126,6 +126,7 @@ class Node():
 		r = dataItem.find(**s)
 		if not r:
 			print("deleteDatas: not found the data item %s" % name_pattern)
+			return
 
 		for d in r["dataItems"]:
 			j = dataItem.delete(d["systemId"])
